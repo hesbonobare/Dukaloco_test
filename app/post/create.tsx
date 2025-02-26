@@ -3,17 +3,33 @@ import { useRouter } from "expo-router";
 import PostForm from "../components/PostForm";
 import { usePosts } from "../context/PostContext";
 import { View, ActivityIndicator, StyleSheet } from "react-native";
+import Toast from "react-native-toast-message"; // Import Toast
+
 
 const CreatePost: React.FC = () => {
   const { addPost } = usePosts();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
+  
+
   const handleSubmit = async (post: { title: string; body: string }) => {
-    setLoading(true); // Show loader while saving
-    await addPost(post); // Ensure this function is async
+    setLoading(true); 
+    await addPost(post);
     setLoading(false);
-    router.back(); // Navigate back only after saving is done
+  
+    
+    Toast.show({
+      type: "success",
+      text1: "Post Created!",
+      text2: "Your blog post has been added successfully 🎉",
+      position: "top",
+    });
+  
+    
+    
+      router.back();
+
   };
 
   return (

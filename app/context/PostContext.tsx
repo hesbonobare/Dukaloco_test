@@ -33,32 +33,80 @@ export const PostProvider: React.FC<PostProviderProps> = ({ children }) => {
     axios.get<Post[]>('https://jsonplaceholder.typicode.com/posts')
       .then(response => setPosts(response.data))
       .catch(error => console.error(error));
-      console.log('posts',posts)
+      // console.log('posts',posts)
   }, []);
+
+  // const addPost = async (post: PostFormValues) => {
+  //   try {
+  //     const response = await axios.post<Post>('https://jsonplaceholder.typicode.com/posts', {
+  //       ...post,
+  //       userId: 1, // Hardcoded user ID
+  //     });
+  //     setPosts([...posts, response.data]);
+  //   } catch (error) {
+  //     console.error(error);
+  //   }
+  // };
 
   const addPost = async (post: PostFormValues) => {
     try {
-      const response = await axios.post<Post>('https://jsonplaceholder.typicode.com/posts', {
-        ...post,
-        userId: 1, // Hardcoded user ID
-      });
-      setPosts([...posts, response.data]);
+      const response = await axios.post<Post>(
+        "https://jsonplaceholder.typicode.com/posts",
+        {
+          ...post,
+          userId: 1, 
+        }
+      );
+  
+      const newPost = {
+        ...response.data,
+        id: Math.floor(Math.random() * 10000), 
+      };
+  
+      setPosts((prevPosts) => [...prevPosts, newPost]);
     } catch (error) {
       console.error(error);
     }
   };
+  
 
-  const editPost = async (id: number, updatedPost: PostFormValues) => {
+  // const editPost = async (id: number, updatedPost: PostFormValues) => {
+  //   try {
+  //     const response = await axios.put<Post>(`https://jsonplaceholder.typicode.com/posts/${id}`, {
+  //       ...updatedPost,
+  //       // userId: 1,
+  //     });
+  //     setPosts(posts.map(post => (post.id === id ? response.data : post)));
+  //   } catch (error) {
+  //     console.error(error);
+  //   }
+  // };
+
+  const editPost = async (id: number, updatedPost: { title: string; body: string }) => {
     try {
+      // Send a PUT request to update the post
       const response = await axios.put<Post>(`https://jsonplaceholder.typicode.com/posts/${id}`, {
         ...updatedPost,
-        userId: 1, // Hardcoded user ID
+        // userId: 1, 
       });
-      setPosts(posts.map(post => (post.id === id ? response.data : post)));
+  
+      if (response.status === 200) {
+        // Update the state with the new edited post
+        setPosts((prevPosts) =>
+          prevPosts.map((post) =>
+            post.id === id ? { ...post, ...updatedPost } : post // Only update the correct post
+          )
+        );
+  
+        console.log("Post updated successfully:", response.data);
+      } else {
+        console.error("Failed to update post:", response.status);
+      }
     } catch (error) {
-      console.error(error);
+      console.error("Error updating post:", error);
     }
   };
+  
 
   const deletePost = async (id: number) => {
     try {

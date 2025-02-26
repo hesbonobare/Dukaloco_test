@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   FlatList,
   TouchableOpacity,
@@ -7,22 +7,45 @@ import {
   StyleSheet,
   Pressable,
 } from "react-native";
-import { Link, useRouter } from "expo-router";
+import { Link } from "expo-router";
 import { usePosts } from "../context/PostContext";
+import DeleteConfirmationModal from './DeleteModal'
+import Toast from "react-native-toast-message"; // Import Toast
 
 const PostList: React.FC = () => {
   const { posts, deletePost } = usePosts();
-  const router = useRouter();
+  const [selectedPostId, setSelectedPostId] = useState<number | null>(null);
+  const [selectedPostTitle, setSelectedPostTitle] = useState<string | null>(null);
+  const [modalVisible, setModalVisible] = useState(false);
 
-  const handleDelete = (id: number) => {
-    deletePost(id);
+  // Open confirmation modal with post details
+  const confirmDelete = (id: number, title: string) => {
+    setSelectedPostId(id);
+    setSelectedPostTitle(title);
+    setModalVisible(true);
+  };
+
+  // Handle actual post deletion
+  const handleDelete = () => {
+    if (selectedPostId !== null) {
+      deletePost(selectedPostId);
+      setModalVisible(false); // Close modal after deleting
+
+      // ✅ Show success notification
+      Toast.show({
+        type: "success",
+        text1: "Post Deleted!",
+        text2: `"${selectedPostTitle}" has been removed successfully.`,
+        position: "top",
+      });
+    }
   };
 
   return (
     <View style={styles.container}>
       <FlatList
         data={posts}
-        keyExtractor={(item) => item.id.toString()}
+        keyExtractor={(item, i) => `${item.id}-${i}`}
         renderItem={({ item }) => (
           <View style={styles.postCard}>
             <Link href={`/post/${item.id}`} asChild>
@@ -42,7 +65,7 @@ const PostList: React.FC = () => {
               {item.userId === 1 && (
                 <TouchableOpacity
                   style={styles.deleteButton}
-                  onPress={() => handleDelete(item.id)}
+                  onPress={() => confirmDelete(item.id, item.title)}
                 >
                   <Text style={styles.buttonText}>🗑 Delete</Text>
                 </TouchableOpacity>
@@ -51,11 +74,29 @@ const PostList: React.FC = () => {
           </View>
         )}
       />
+
+      {/* Use the reusable modal */}
+      <DeleteConfirmationModal
+        visible={modalVisible}
+        postTitle={selectedPostTitle}
+        onCancel={() => setModalVisible(false)}
+        onConfirm={handleDelete}
+      />
+
+      {/* Create Post Button */}
       <Link href="/post/create" asChild>
         <TouchableOpacity style={styles.createButton}>
           <Text style={styles.createButtonText}>➕ Create Post</Text>
         </TouchableOpacity>
       </Link>
+
+      {/* Log Posts Button */}
+      <TouchableOpacity
+        style={styles.createButton}
+        onPress={() => console.log("Current Posts:", posts)}
+      >
+        <Text style={styles.createButtonText}>📝 Log Posts</Text>
+      </TouchableOpacity>
     </View>
   );
 };

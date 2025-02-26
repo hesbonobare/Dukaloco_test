@@ -3,6 +3,8 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import PostForm from "../components/PostForm";
 import { usePosts } from "../context/PostContext";
 import { View, Text, ActivityIndicator, StyleSheet } from "react-native";
+import Toast from "react-native-toast-message"; 
+
 
 const EditPost: React.FC = () => {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -12,12 +14,29 @@ const EditPost: React.FC = () => {
 
   const post = posts.find((p) => p.id === Number(id));
 
+  // const handleSubmit = async (updatedPost: { title: string; body: string }) => {
+  //   setLoading(true); 
+  //   await editPost(Number(id), updatedPost); 
+  //   setLoading(false);
+  //   router.back(); 
+  // };
   const handleSubmit = async (updatedPost: { title: string; body: string }) => {
     setLoading(true); // Show loader while saving
-    await editPost(Number(id), updatedPost); // Ensure this function is async
+    await editPost(Number(id), updatedPost); // Call editPost function
     setLoading(false);
-    router.back(); // Navigate back only after saving is done
+    
+    Toast.show({
+      type: "success",
+      text1: "Post Updated!",
+      text2: "Your blog post has been successfully updated 🎉",
+      position: "top",
+    });
+  
+    
+      router.back(); 
+    
   };
+  
 
   if (!post) {
     return (
