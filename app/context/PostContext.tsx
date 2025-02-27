@@ -61,7 +61,7 @@ export const PostProvider: React.FC<PostProviderProps> = ({ children }) => {
         icon: "success",
       });
     } catch (error) {
-      // console.error(error);
+      
       showMessage({
         message: "Could not create post",
         type: "danger",

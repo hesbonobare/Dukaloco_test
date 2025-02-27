@@ -14,15 +14,11 @@ const EditPost: React.FC = () => {
 
   const post = posts.find((p) => p.id === Number(id));
 
-  // const handleSubmit = async (updatedPost: { title: string; body: string }) => {
-  //   setLoading(true); 
-  //   await editPost(Number(id), updatedPost); 
-  //   setLoading(false);
-  //   router.back(); 
-  // };
+ 
+  
   const handleSubmit = async (updatedPost: { title: string; body: string }) => {
-    setLoading(true); // Show loader while saving
-    await editPost(Number(id), updatedPost); // Call editPost function
+    setLoading(true); 
+    await editPost(Number(id), updatedPost); 
     setLoading(false);
     
     Toast.show({
@@ -31,8 +27,6 @@ const EditPost: React.FC = () => {
       text2: "Your blog post has been successfully updated 🎉",
       position: "top",
     });
-  
-    
       router.back(); 
     
   };
