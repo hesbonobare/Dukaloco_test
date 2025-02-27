@@ -6,11 +6,13 @@ import {
   Text,
   StyleSheet,
   Pressable,
+  Button,
 } from "react-native";
 import { Link } from "expo-router";
 import { usePosts } from "../context/PostContext";
 import DeleteConfirmationModal from './DeleteModal'
-import Toast from "react-native-toast-message"; // Import Toast
+import FlashMessage, { showMessage } from "react-native-flash-message";
+
 
 const PostList: React.FC = () => {
   const { posts, deletePost } = usePosts();
@@ -18,28 +20,28 @@ const PostList: React.FC = () => {
   const [selectedPostTitle, setSelectedPostTitle] = useState<string | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
 
-  // Open confirmation modal with post details
   const confirmDelete = (id: number, title: string) => {
     setSelectedPostId(id);
     setSelectedPostTitle(title);
     setModalVisible(true);
   };
 
-  // Handle actual post deletion
+  
+
   const handleDelete = () => {
     if (selectedPostId !== null) {
       deletePost(selectedPostId);
-      setModalVisible(false); // Close modal after deleting
+      setModalVisible(false); 
 
-      // ✅ Show success notification
-      Toast.show({
+      showMessage({
+        message: "Post deleted successfully!",
         type: "success",
-        text1: "Post Deleted!",
-        text2: `"${selectedPostTitle}" has been removed successfully.`,
-        position: "top",
       });
     }
   };
+  
+
+ 
 
   return (
     <View style={styles.container}>
@@ -90,13 +92,13 @@ const PostList: React.FC = () => {
         </TouchableOpacity>
       </Link>
 
-      {/* Log Posts Button */}
+      {/* Log Posts Button
       <TouchableOpacity
         style={styles.createButton}
         onPress={() => console.log("Current Posts:", posts)}
       >
         <Text style={styles.createButtonText}>📝 Log Posts</Text>
-      </TouchableOpacity>
+      </TouchableOpacity> */}
     </View>
   );
 };

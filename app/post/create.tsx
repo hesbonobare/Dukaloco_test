@@ -28,7 +28,7 @@ const CreatePost: React.FC = () => {
   
     
     
-      router.back();
+     router.back();
 
   };
 
