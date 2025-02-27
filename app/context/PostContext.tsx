@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import axios from 'axios';
 import { showMessage } from "react-native-flash-message";
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface Post {
     id: number;
@@ -31,97 +31,132 @@ interface PostProviderProps {
 export const PostProvider: React.FC<PostProviderProps> = ({ children }) => {
   const [posts, setPosts] = useState<Post[]>([]);
 
-  useEffect(() => {
+  const fetchPosts=()=>{
     axios.get<Post[]>('https://jsonplaceholder.typicode.com/posts')
-      .then(response => setPosts(response.data))
-      .catch(error => console.error(error));
-      console.log('posts',posts)
-  }, []);
+    .then(response => setPosts(response.data))
+    .catch(error => console.error(error));
+    console.log('posts',posts)
+  }
 
-  const addPost = async (post: PostFormValues) => {
+
+const addPost = async (post: PostFormValues) => {
+  try {
+    const response = await axios.post<Post>("https://jsonplaceholder.typicode.com/posts", {
+      ...post,
+      userId: 1,
+    });
+
+    const newPost = {
+      ...response.data,
+      id: Math.floor(Math.random() * 10000),
+    };
+
+    const updatedPosts = [...posts, newPost];
+    setPosts(updatedPosts);
+
+    await AsyncStorage.setItem("posts", JSON.stringify(updatedPosts));
+
+    showMessage({
+      message: "Post created successfully!",
+      type: "success",
+      icon: "success",
+    });
+  } catch (error) {
+    showMessage({
+      message: "Could not create post",
+      type: "danger",
+      icon: "danger",
+    });
+  }
+};
+
+
+useEffect(() => {
+  const loadPosts = async () => {
+    const storedPosts = await AsyncStorage.getItem("posts");
+
+    if (storedPosts) {
+      setPosts(JSON.parse(storedPosts));
+    } else {
+      await fetchPosts(); 
+    }
+  };
+
+  loadPosts(); 
+}, []);
+  
+  const editPost = async (id: number, updatedPostData: Partial<Post>) => {
     try {
-      const response = await axios.post<Post>(
-        "https://jsonplaceholder.typicode.com/posts",
-        {
-          ...post,
-          userId: 1, 
+      const storedPosts = await AsyncStorage.getItem("posts");
+      let postsArray = storedPosts ? JSON.parse(storedPosts) : [];
+  
+      const localPostIndex = postsArray.findIndex((post: Post) => post.id === id);
+  
+      if (localPostIndex !== -1) {
+        postsArray[localPostIndex] = { ...postsArray[localPostIndex], ...updatedPostData };
+  
+        await AsyncStorage.setItem("posts", JSON.stringify(postsArray));
+        setPosts(postsArray);
+  
+        showMessage({
+          message: "Post updated",
+          type: "success",
+          icon: "success",
+        });
+      } else {
+        const response = await axios.put(`https://jsonplaceholder.typicode.com/posts/${id}`, updatedPostData);
+  
+        if (response.status === 200) {
+          setPosts((prevPosts) =>
+            prevPosts.map((post) => (post.id === id ? { ...post, ...updatedPostData } : post))
+          );
+  
+          showMessage({
+            message: "Post updated successfully!",
+            type: "success",
+            icon: "success",
+          });
+        } else {
+          throw new Error("Failed to update post");
         }
-      );
-  
-      const newPost = {
-        ...response.data,
-        id: Math.floor(Math.random() * 10000), 
-      };
-  
-      setPosts((prevPosts) => [...prevPosts, newPost]);
-
-      showMessage({
-        message: "Post created successfully!",
-        type: "success",
-        icon: "success",
-      });
+      }
     } catch (error) {
-      
       showMessage({
-        message: "Could not create post",
+        message: "Failed to update post!",
         type: "danger",
         icon: "danger",
       });
     }
   };
-  
-
-  
-
-  const editPost = async (id: number, updatedPost: { title: string; body: string }) => {
-    try {
-      
-      const response = await axios.put<Post>(`https://jsonplaceholder.typicode.com/posts/${id}`, {
-        ...updatedPost,
-        // userId: 1, 
-      });
-  
-      if (response.status === 200) {
-        
-        setPosts((prevPosts) =>
-          prevPosts.map((post) =>
-            post.id === id ? { ...post, ...updatedPost } : post 
-          )
-        );
-
-        showMessage({
-          message: "Post edited successfully!",
-          type: "success",
-          icon: "success",
-        });
-        // console.log("Post updated successfully:", response.data);
-      } else {
-        // console.error("Failed to update post:", response.status);
-        showMessage({
-          message: response?.status === 500 ? "Server error!" : "Something went wrong.",
-          type: "success",
-          icon: "success",
-        });
-
-        
-      }
-    } catch (error) {
-      console.error("Error updating post:", error);
-    }
-  };
-  
 
   const deletePost = async (id: number) => {
     try {
-      await axios.delete(`https://jsonplaceholder.typicode.com/posts/${id}`);
-      setPosts(posts.filter(post => post.id !== id));
-      showMessage({
-        message: "Post deleted successfully!",
-        type: "success",
-        icon: "success",
-      });
+      const storedPosts = await AsyncStorage.getItem("posts");
+      let postsArray = storedPosts ? JSON.parse(storedPosts) : [];
+  
+      const localPostIndex = postsArray.findIndex((post: Post) => post.id === id);
+  
+      if (localPostIndex !== -1) {
+        const updatedPosts = postsArray.filter((post: Post) => post.id !== id);
+        await AsyncStorage.setItem("posts", JSON.stringify(updatedPosts));
+  
+        setPosts(updatedPosts);
+        showMessage({
+          message: "Post deleted!",
+          type: "success",
+          icon: "success",
+        });
+      } else {
+        await axios.delete(`https://jsonplaceholder.typicode.com/posts/${id}`);
+        
+        setPosts((prevPosts) => prevPosts.filter((post) => post.id !== id));
+        showMessage({
+          message: "Post deleted!",
+          type: "success",
+          icon: "success",
+        });
+      }
     } catch (error) {
-      console.error(error);
       showMessage({
         message: "Failed to delete post!",
         type: "danger",
@@ -129,7 +164,7 @@ export const PostProvider: React.FC<PostProviderProps> = ({ children }) => {
       });
     }
   };
-
+  
   return (
     <PostContext.Provider value={{ posts, addPost, editPost, deletePost }}>
       {children}

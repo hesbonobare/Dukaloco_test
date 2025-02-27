@@ -6,12 +6,12 @@ import {
   Text,
   StyleSheet,
   Pressable,
-  Button,
+  ActivityIndicator
 } from "react-native";
 import { Link } from "expo-router";
 import { usePosts } from "../context/PostContext";
 import DeleteConfirmationModal from './DeleteModal'
-import FlashMessage, { showMessage } from "react-native-flash-message";
+import { showMessage } from "react-native-flash-message";
 
 
 const PostList: React.FC = () => {
@@ -32,11 +32,6 @@ const PostList: React.FC = () => {
     if (selectedPostId !== null) {
       deletePost(selectedPostId);
       setModalVisible(false); 
-
-      showMessage({
-        message: "Post deleted successfully!",
-        type: "success",
-      });
     }
   };
   
@@ -45,7 +40,12 @@ const PostList: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <FlatList
+      
+      {posts.length===0 ? (
+        <View>
+      <ActivityIndicator size="large" color="#0000ff" /> 
+      </View>)
+      : <FlatList
         data={posts}
         keyExtractor={(item, i) => `${item.id}-${i}`}
         renderItem={({ item }) => (
@@ -76,8 +76,9 @@ const PostList: React.FC = () => {
           </View>
         )}
       />
+}
+     
 
-      {/* Use the reusable modal */}
       <DeleteConfirmationModal
         visible={modalVisible}
         postTitle={selectedPostTitle}
@@ -85,20 +86,12 @@ const PostList: React.FC = () => {
         onConfirm={handleDelete}
       />
 
-      {/* Create Post Button */}
+  
       <Link href="/post/create" asChild>
         <TouchableOpacity style={styles.createButton}>
           <Text style={styles.createButtonText}>➕ Create Post</Text>
         </TouchableOpacity>
       </Link>
-
-      {/* Log Posts Button
-      <TouchableOpacity
-        style={styles.createButton}
-        onPress={() => console.log("Current Posts:", posts)}
-      >
-        <Text style={styles.createButtonText}>📝 Log Posts</Text>
-      </TouchableOpacity> */}
     </View>
   );
 };
